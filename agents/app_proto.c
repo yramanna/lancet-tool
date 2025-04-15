@@ -32,6 +32,7 @@
 #include <lancet/app_proto.h>
 #include <lancet/error.h>
 #include <lancet/rand_gen.h>
+#include<lancet/agent.h>
 
 #ifdef ENABLE_R2P2
 #include <r2p2/api.h>
@@ -258,7 +259,7 @@ static int stss_init(char *proto, struct application_protocol *app_proto)
 	return 0;
 }
 
-struct application_protocol *init_app_proto(char *proto)
+struct application_protocol *init_app_proto(char *proto, enum transport_protocol_type tp_type)
 {
 	struct application_protocol *app_proto;
 

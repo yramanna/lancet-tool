@@ -67,6 +67,7 @@ struct agent_config *parse_arguments(int argc, char **argv)
 	struct agent_config *cfg;
 	char *token1, *token2;
 	struct sockaddr_in sa;
+	char *app_proto_type;
 	// char proto[128];
 
 	cfg = calloc(1, sizeof(struct agent_config));
@@ -143,11 +144,7 @@ struct agent_config *parse_arguments(int argc, char **argv)
 			break;
 		case 'r':
 			// Application protocol (request response types)
-			cfg->app_proto = init_app_proto(optarg);
-			if (!cfg->app_proto) {
-				lancet_fprintf(stderr, "Failed to create app proto\n");
-				return NULL;
-			}
+			app_proto_type = optarg;
 			break;
 		case 'n':
 			strncpy(cfg->if_name, optarg, 64);
@@ -159,6 +156,12 @@ struct agent_config *parse_arguments(int argc, char **argv)
 			lancet_fprintf(stderr, "Unknown argument\n");
 			abort();
 		}
+		
+	}
+	cfg->app_proto = init_app_proto(app_proto_type, cfg->tp_type);
+	if (!cfg->app_proto) {
+		lancet_fprintf(stderr, "Failed to create app proto\n");
+		return NULL;
 	}
 #ifdef ENABLE_R2P2
 	// Generators interfacing with R2P2 must use host endianness (except latency)

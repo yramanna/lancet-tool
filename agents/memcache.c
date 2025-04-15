@@ -34,10 +34,21 @@
 #include <lancet/key_gen.h>
 #include <lancet/memcache_bin.h>
 #include <lancet/rand_gen.h>
+#include <lancet/tp_proto.h>
+#include<lancet/agent.h>
+
+struct memcache_udp_header {
+ uint16_t req_id;
+ uint16_t sec_num;
+ uint16_t tot_datagram;
+ uint16_t unused;
+}; //Structure to hold UDP frame header contents
 
 static __thread struct bmc_header header;
 static __thread uint64_t extras;
 static __thread char val_len_str[64];
+// static enum transport_protocol_type memcache_tp;
+static __thread struct memcache_udp_header udp_header; //Initialize variables at file scope 
 static char get_cmd[] = "get ";
 static char set_cmd[] = "set ";
 static char rn[] = "\r\n";
@@ -107,12 +118,13 @@ OUT:
 }
 
 static int memcache_ascii_create_request(struct application_protocol *proto,
-										 struct request *req)
+										 struct request *req, enum transport_protocol_type tp_type)
 {
 	struct kv_info *info;
 	long val_len;
 	int key_idx;
 	struct iovec *key;
+	int next;
 
 	info = (struct kv_info *)proto->arg;
 	key_idx = generate(info->key_sel);
@@ -124,22 +136,31 @@ static int memcache_ascii_create_request(struct application_protocol *proto,
 		assert(val_len <= MAX_VAL_SIZE);
 		snprintf(val_len_str, 64, "%ld", val_len);
 
-		req->iovs[0].iov_base = set_cmd;
-		req->iovs[0].iov_len = 4;
-		req->iovs[1].iov_base = key->iov_base;
-		req->iovs[1].iov_len = key->iov_len;
-		req->iovs[2].iov_base = set_zeros;
-		req->iovs[2].iov_len = 5;
-		req->iovs[3].iov_base = val_len_str;
-		req->iovs[3].iov_len = strlen(val_len_str);
-		req->iovs[4].iov_base = rn;
-		req->iovs[4].iov_len = 2;
-		req->iovs[5].iov_base = random_char;
-		req->iovs[5].iov_len = val_len;
-		req->iovs[6].iov_base = rn;
-		req->iovs[6].iov_len = 2;
+		next = 0;
+		if (tp_type == UDP) {
+			udp_header.req_id = htons(1);     // Sample request ID; in practice, we'll use a proper counter.
+			udp_header.sec_num = htons(0);
+			udp_header.tot_datagram = htons(1);
+			udp_header.unused = 0;
+			req->iovs[next].iov_base = &udp_header;
+			req->iovs[next++].iov_len = sizeof(udp_header);
+		}
+		req->iovs[next].iov_base = set_cmd;
+		req->iovs[next++].iov_len = 4;
+		req->iovs[next].iov_base = key->iov_base;
+		req->iovs[next++].iov_len = key->iov_len;
+		req->iovs[next].iov_base = set_zeros;
+		req->iovs[next++].iov_len = 5;
+		req->iovs[next].iov_base = val_len_str;
+		req->iovs[next++].iov_len = strlen(val_len_str);
+		req->iovs[next].iov_base = rn;
+		req->iovs[next++].iov_len = 2;
+		req->iovs[next].iov_base = random_char;
+		req->iovs[next++].iov_len = val_len;
+		req->iovs[next].iov_base = rn;
+		req->iovs[next++].iov_len = 2;
 
-		req->iov_cnt = 7;
+		req->iov_cnt = next;
 	} else {
 		// get
 		req->iovs[0].iov_base = get_cmd;
@@ -265,6 +286,7 @@ int memcache_init(char *proto, struct application_protocol *app_proto)
 	int key_count;
 	char *saveptr;
 	char key_sel[64];
+	// memcache_tp = tp_type; //Storing transport protocol type for later use
 
 	data = malloc(sizeof(struct kv_info));
 	assert(data != NULL);
