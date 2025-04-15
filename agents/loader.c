@@ -35,7 +35,6 @@
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <unistd.h>
-
 #include <lancet/agent.h>
 #include <lancet/app_proto.h>
 
@@ -92,8 +91,9 @@ int main(int argc, char **argv)
 
 	key_count = kv_get_key_count(proto);
 
+	enum transport_protocol_type *dumb;
 	for (int i = 0; i < key_count; i++) {
-		if (create_request(proto, &req)) {
+		if (create_request(proto, &req, &dumb)) {
 			fprintf(stderr, "failed to create request %d\n", i);
 			return EXIT_FAILURE;
 		}

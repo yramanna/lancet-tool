@@ -158,7 +158,7 @@ struct agent_config *parse_arguments(int argc, char **argv)
 		}
 		
 	}
-	cfg->app_proto = init_app_proto(app_proto_type, cfg->tp_type);
+	cfg->app_proto = init_app_proto(app_proto_type);
 	if (!cfg->app_proto) {
 		lancet_fprintf(stderr, "Failed to create app proto\n");
 		return NULL;
@@ -177,4 +177,4 @@ struct agent_config *parse_arguments(int argc, char **argv)
 	}
 
 	return cfg;
-}
+} 

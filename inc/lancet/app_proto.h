@@ -29,10 +29,10 @@ extern "C" {
 #endif
 
 #include <sys/uio.h>
-
 #include <lancet/key_gen.h>
 #include <lancet/rand_gen.h>
 #include <lancet/stats.h>
+#include <lancet/agent.h>
 
 // A pointer to a random char for kv-store vals
 #define MAX_VAL_SIZE 2 * 1024 * 1024
@@ -61,16 +61,16 @@ struct application_protocol {
 	enum app_proto_type type;
 	void *arg;
 	int (*create_request)(struct application_protocol *proto,
-						  struct request *req);
+						  struct request *req, enum transport_protocol_type *tp_type);
 	struct byte_req_pair (*consume_response)(struct application_protocol *proto,
 											 struct iovec *response);
 };
 
 struct application_protocol *init_app_proto(char *proto);
 static inline int create_request(struct application_protocol *proto,
-								 struct request *req)
+								 struct request *req, enum transport_protocol_type *tp_type)
 {
-	return proto->create_request(proto, req);
+	return proto->create_request(proto, req, tp_type);
 };
 
 static inline struct byte_req_pair
