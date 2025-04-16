@@ -36,6 +36,7 @@
 #include <lancet/rand_gen.h>
 #include <lancet/tp_proto.h>
 #include<lancet/agent.h>
+#include<lancet/error.h>
 
 struct memcache_udp_header {
  uint16_t req_id;
@@ -119,6 +120,7 @@ OUT:
 static int memcache_ascii_create_request(struct application_protocol *proto,
 										 struct request *req, int tp_proto)
 {
+	lancet_fprintf(stderr, "memcache.c -- ascii create request\n");
 	struct kv_info *info;
 	long val_len;
 	int key_idx;
@@ -137,6 +139,7 @@ static int memcache_ascii_create_request(struct application_protocol *proto,
 
 		next = 0;
 		if (tp_proto == 1) {
+			lancet_fprintf(stderr, "memcache.c -- udp condition\n");
 			udp_header.req_id = htons(1);     // Sample request ID; in practice, we'll use a proper counter.
 			udp_header.sec_num = htons(0);
 			udp_header.tot_datagram = htons(1);
@@ -162,14 +165,24 @@ static int memcache_ascii_create_request(struct application_protocol *proto,
 		req->iov_cnt = next;
 	} else {
 		// get
-		req->iovs[0].iov_base = get_cmd;
-		req->iovs[0].iov_len = 4;
-		req->iovs[1].iov_base = key->iov_base;
-		req->iovs[1].iov_len = key->iov_len;
-		req->iovs[2].iov_base = rn;
-		req->iovs[2].iov_len = 2;
+		next = 0;
+                if (tp_proto == 1) {
+                        lancet_fprintf(stderr, "memcache.c -- udp condition\n");
+                        udp_header.req_id = htons(1);     // Sample request ID; in practice, we'll use a proper counter.
+                        udp_header.sec_num = htons(0);
+                        udp_header.tot_datagram = htons(1);
+                        udp_header.unused = 0;
+                        req->iovs[next].iov_base = &udp_header;
+                        req->iovs[next++].iov_len = sizeof(udp_header);
+                }
+		req->iovs[next].iov_base = get_cmd;
+		req->iovs[next++].iov_len = 4;
+		req->iovs[next].iov_base = key->iov_base;
+		req->iovs[next++].iov_len = key->iov_len;
+		req->iovs[next].iov_base = rn;
+		req->iovs[next++].iov_len = 2;
 
-		req->iov_cnt = 3;
+		req->iov_cnt = next;
 	}
 
 	return 0;
@@ -228,6 +241,7 @@ static int memcache_bin_create_request(struct application_protocol *proto,
 	long val_len;
 	int key_idx;
 	struct iovec *key;
+	int next;
 
 	bzero(&header, sizeof(struct bmc_header));
 	extras = 0;

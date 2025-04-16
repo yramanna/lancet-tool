@@ -259,8 +259,9 @@ static int stss_init(char *proto, struct application_protocol *app_proto)
 	return 0;
 }
 
-struct application_protocol *init_app_proto(char *proto, enum transport_protocol_type tp_type)
+struct application_protocol *init_app_proto(char *proto)
 {
+	lancet_fprintf(stderr, "app_proto.c -- init_app_proto\n");
 	struct application_protocol *app_proto;
 
 	app_proto = malloc(sizeof(struct application_protocol));
@@ -290,3 +291,4 @@ struct application_protocol *init_app_proto(char *proto, enum transport_protocol
 
 	return app_proto;
 }
+

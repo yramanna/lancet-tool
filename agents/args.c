@@ -37,6 +37,7 @@
 static struct transport_protocol *
 init_transport_protocol(enum transport_protocol_type tp_type)
 {
+	lancet_fprintf(stderr, "args.c -- init_transport_protocol\n");
 	struct transport_protocol *res;
 
 	switch (tp_type) {
@@ -170,6 +171,7 @@ struct agent_config *parse_arguments(int argc, char **argv)
 			cfg->targets[i].ip = ntohl(cfg->targets[i].ip);
 	}
 #endif
+	lancet_fprintf(stderr, "args.c -- init tp called\n");
 	cfg->tp = init_transport_protocol(cfg->tp_type);
 	if (!cfg->tp) {
 		lancet_fprintf(stderr, "Failed to init transport\n");

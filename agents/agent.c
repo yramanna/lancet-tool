@@ -125,7 +125,7 @@ void set_conn_open(int val)
 struct request *prepare_request(void)
 {
 	int tp_proto;
-	switch (tp_type) {
+	switch (cfg->tp_type) {
 		case TCP:
 			tp_proto = 0;
 			break;
@@ -158,6 +158,7 @@ struct byte_req_pair process_response(char *buf, int size)
 
 static void *agent_main(void *arg)
 {
+	lancet_fprintf(stderr, "agent.c -- agent_main\n");
 	cpu_set_t cpuset;
 	pthread_t thread;
 	int s;
@@ -177,7 +178,7 @@ static void *agent_main(void *arg)
 		return NULL;
 	}
 	cfg->tp->tp_main[cfg->atype]();
-
+	lancet_fprintf(stderr, cfg->tp->tp_main[cfg->atype]);
 	return NULL;
 }
 
@@ -213,6 +214,7 @@ static int configure_control_block(void)
 
 int main(int argc, char **argv)
 {
+	lancet_fprintf(stderr, "agent.c -- main\n");
 	int i;
 	pthread_t *tids;
 

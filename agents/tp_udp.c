@@ -292,6 +292,7 @@ static void throughput_udp_main(void)
 			socket = get_socket();
 			if (!socket)
 				goto REP_PROC;
+			lancet_fprintf(stderr, "tp_udp.c -- prepare request called");
 			to_send = prepare_request();
 			bytes_to_send = 0;
 			for (i = 0; i < to_send->iov_cnt; i++)
