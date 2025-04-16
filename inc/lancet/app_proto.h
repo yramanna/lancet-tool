@@ -61,16 +61,16 @@ struct application_protocol {
 	enum app_proto_type type;
 	void *arg;
 	int (*create_request)(struct application_protocol *proto,
-						  struct request *req, enum transport_protocol_type *tp_type);
+						  struct request *req, int tp_proto);
 	struct byte_req_pair (*consume_response)(struct application_protocol *proto,
 											 struct iovec *response);
 };
 
 struct application_protocol *init_app_proto(char *proto);
 static inline int create_request(struct application_protocol *proto,
-								 struct request *req, enum transport_protocol_type *tp_type)
+								 struct request *req, int tp_proto)
 {
-	return proto->create_request(proto, req, tp_type);
+	return proto->create_request(proto, req, tp_proto);
 };
 
 static inline struct byte_req_pair

@@ -124,7 +124,27 @@ void set_conn_open(int val)
 
 struct request *prepare_request(void)
 {
-	create_request(cfg->app_proto, &to_send);
+	int tp_proto;
+	switch (tp_type) {
+		case TCP:
+			tp_proto = 0;
+			break;
+		case UDP:
+			tp_proto = 1;
+			break;
+		case TLS:
+			tp_proto = 2;
+			break;
+	#ifdef ENABLE_R2P2
+		case R2P2:
+			tp_proto = 3;
+			break;
+	#endif
+		default:
+			tp_proto = 0;
+			break;
+	}
+	create_request(cfg->app_proto, &to_send, tp_proto);
 
 	return &to_send;
 }

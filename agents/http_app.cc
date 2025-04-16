@@ -57,7 +57,7 @@ public:
 };
 
 int http_create_request(application_protocol *proto,
-	request *req)
+	request *req, int tp_proto)
 {
     using namespace std;
     static __thread RequestCreator* requestCreator = nullptr;

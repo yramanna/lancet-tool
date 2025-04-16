@@ -47,7 +47,6 @@ struct memcache_udp_header {
 static __thread struct bmc_header header;
 static __thread uint64_t extras;
 static __thread char val_len_str[64];
-// static enum transport_protocol_type memcache_tp;
 static __thread struct memcache_udp_header udp_header; //Initialize variables at file scope 
 static char get_cmd[] = "get ";
 static char set_cmd[] = "set ";
@@ -118,7 +117,7 @@ OUT:
 }
 
 static int memcache_ascii_create_request(struct application_protocol *proto,
-										 struct request *req, enum transport_protocol_type tp_type)
+										 struct request *req, int tp_proto)
 {
 	struct kv_info *info;
 	long val_len;
@@ -137,7 +136,7 @@ static int memcache_ascii_create_request(struct application_protocol *proto,
 		snprintf(val_len_str, 64, "%ld", val_len);
 
 		next = 0;
-		if (tp_type == UDP) {
+		if (tp_proto == 1) {
 			udp_header.req_id = htons(1);     // Sample request ID; in practice, we'll use a proper counter.
 			udp_header.sec_num = htons(0);
 			udp_header.tot_datagram = htons(1);
@@ -223,7 +222,7 @@ OUT:
 }
 
 static int memcache_bin_create_request(struct application_protocol *proto,
-									   struct request *req)
+									   struct request *req, int tp_proto)
 {
 	struct kv_info *info;
 	long val_len;
@@ -252,16 +251,27 @@ static int memcache_bin_create_request(struct application_protocol *proto,
 		header.extra_len = 0x08; // sets have extras for flags and expiration
 		header.body_len = htonl(key->iov_len + val_len + header.extra_len);
 
-		req->iovs[0].iov_base = &header;
-		req->iovs[0].iov_len = sizeof(struct bmc_header);
-		req->iovs[1].iov_base = &extras;
-		req->iovs[1].iov_len = sizeof(uint64_t);
-		req->iovs[2].iov_base = key->iov_base;
-		req->iovs[2].iov_len = key->iov_len;
-		req->iovs[3].iov_base = random_char;
-		req->iovs[3].iov_len = val_len;
+		next = 0;
+		if (tp_proto == 1) {
+			udp_header.req_id = htons(1);     // Sample request ID; in practice, we'll use a proper counter.
+			udp_header.sec_num = htons(0);
+			udp_header.tot_datagram = htons(1);
+			udp_header.unused = 0;
+			req->iovs[next].iov_base = &udp_header;
+			req->iovs[next++].iov_len = sizeof(udp_header);
+		}
 
-		req->iov_cnt = 4;
+		req->iovs[next].iov_base = &header;
+		req->iovs[next++].iov_len = sizeof(struct bmc_header);
+		req->iovs[next].iov_base = &extras;
+		req->iovs[next++].iov_len = sizeof(uint64_t);
+		req->iovs[next].iov_base = key->iov_base;
+		req->iovs[next++].iov_len = key->iov_len;
+		req->iovs[next].iov_base = random_char;
+		req->iovs[next++].iov_len = val_len;
+
+		req->iov_cnt = next;
+
 	} else {
 		// get
 		header.opcode = CMD_GETK;

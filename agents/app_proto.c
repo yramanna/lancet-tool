@@ -44,7 +44,7 @@ char random_char[MAX_VAL_SIZE];
 /*
  * Echo protocol
  */
-int echo_create_request(struct application_protocol *proto, struct request *req)
+int echo_create_request(struct application_protocol *proto, struct request *req, int tp_proto)
 {
 	struct iovec *fixed_req = (struct iovec *)proto->arg;
 	req->iovs[0] = *fixed_req;
@@ -97,7 +97,7 @@ static int echo_init(char *proto, struct application_protocol *app_proto)
  * Synthetic protocol
  */
 int synthetic_create_request(struct application_protocol *proto,
-							 struct request *req)
+							 struct request *req, int tp_proto)
 {
 	struct rand_gen *generator = (struct rand_gen *)proto->arg;
 
@@ -161,7 +161,7 @@ struct stss_data {
  * Request 3 longs service_time, request_size, reply_size
  */
 int stss_create_request(struct application_protocol *proto,
-		struct request *req)
+		struct request *req, int tp_proto)
 {
 	struct stss_data *data = (struct stss_data *)proto->arg;
 	long *req_payload;
