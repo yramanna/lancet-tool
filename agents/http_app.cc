@@ -75,7 +75,7 @@ int http_create_request(application_protocol *proto,
 const size_t max_headers = 32;
 const char* content_length = "Content-Length";
 const size_t content_length_length = 14;
-byte_req_pair http_consume_response(application_protocol *proto, iovec *response) {
+byte_req_pair http_consume_response(application_protocol *proto, iovec *response, int tp_proto) {
     using namespace std;
     const char *msg;
     size_t msg_len, num_headers = max_headers;

@@ -111,7 +111,7 @@ static int parse_bulk_string(char *buf, int bytes_left)
 }
 
 static struct byte_req_pair redis_kv_consume_response(struct application_protocol *proto,
-											struct iovec *resp)
+											struct iovec *resp, int tp_proto)
 {
 	struct byte_req_pair res;
 	int bytes_to_process, processed;

@@ -91,9 +91,8 @@ int main(int argc, char **argv)
 
 	key_count = kv_get_key_count(proto);
 
-	enum transport_protocol_type *dumb;
 	for (int i = 0; i < key_count; i++) {
-		if (create_request(proto, &req, &dumb)) {
+		if (create_request(proto, &req, 1)) {
 			fprintf(stderr, "failed to create request %d\n", i);
 			return EXIT_FAILURE;
 		}
@@ -104,7 +103,7 @@ int main(int argc, char **argv)
 		len = read(sock, buf, 1024);
 		received.iov_base = buf;
 		received.iov_len = len;
-		pair = consume_response(proto, &received);
+		pair = consume_response(proto, &received, 1);
 		assert(pair.reqs >= 1);
 	}
 

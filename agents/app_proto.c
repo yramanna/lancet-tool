@@ -55,7 +55,7 @@ int echo_create_request(struct application_protocol *proto, struct request *req,
 }
 
 struct byte_req_pair echo_consume_response(struct application_protocol *proto,
-										   struct iovec *response)
+										   struct iovec *response, int tp_proto)
 {
 	struct byte_req_pair res;
 
@@ -116,7 +116,7 @@ int synthetic_create_request(struct application_protocol *proto,
 
 struct byte_req_pair
 synthetic_consume_response(struct application_protocol *proto,
-						   struct iovec *response)
+						   struct iovec *response, int tp_proto)
 {
 	struct byte_req_pair res;
 
@@ -198,7 +198,7 @@ int stss_create_request(struct application_protocol *proto,
  * Reply size 1 long (#bytes to follow) + payload
  */
 struct byte_req_pair stss_consume_response(struct application_protocol *proto,
-		struct iovec *response)
+		struct iovec *response, int tp_proto)
 {
 	struct byte_req_pair res = {0};
 	long *payload_size;
@@ -261,7 +261,6 @@ static int stss_init(char *proto, struct application_protocol *app_proto)
 
 struct application_protocol *init_app_proto(char *proto)
 {
-	lancet_fprintf(stderr, "app_proto.c -- init_app_proto\n");
 	struct application_protocol *app_proto;
 
 	app_proto = malloc(sizeof(struct application_protocol));

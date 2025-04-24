@@ -63,7 +63,7 @@ struct application_protocol {
 	int (*create_request)(struct application_protocol *proto,
 						  struct request *req, int tp_proto);
 	struct byte_req_pair (*consume_response)(struct application_protocol *proto,
-											 struct iovec *response);
+											 struct iovec *response, int tp_proto);
 };
 
 struct application_protocol *init_app_proto(char *proto);
@@ -74,9 +74,9 @@ static inline int create_request(struct application_protocol *proto,
 };
 
 static inline struct byte_req_pair
-consume_response(struct application_protocol *proto, struct iovec *response)
+consume_response(struct application_protocol *proto, struct iovec *response, int tp_proto)
 {
-	return proto->consume_response(proto, response);
+	return proto->consume_response(proto, response, tp_proto);
 };
 
 struct kv_info {

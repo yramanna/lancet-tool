@@ -38,7 +38,7 @@
 #include<lancet/agent.h>
 #include<lancet/error.h>
 
-struct memcache_udp_header {
+struct __attribute__((__packed__)) memcache_udp_header {
  uint16_t req_id;
  uint16_t sec_num;
  uint16_t tot_datagram;
@@ -49,9 +49,11 @@ static __thread struct bmc_header header;
 static __thread uint64_t extras;
 static __thread char val_len_str[64];
 static __thread struct memcache_udp_header udp_header; //Initialize variables at file scope 
+
 static char get_cmd[] = "get ";
 static char set_cmd[] = "set ";
 static char rn[] = "\r\n";
+static uint64_t proto_header = 0;
 static char set_zeros[] = " 0 0 ";
 
 enum { WAIT_FOR_HEADER = 0, WAIT_FOR_BODY, FINISHED };
@@ -71,21 +73,26 @@ static char *strchnth(char *s, char c, int occ)
 
 static struct byte_req_pair
 memcache_ascii_consume_response(struct application_protocol *proto,
-								struct iovec *resp)
+								struct iovec *resp, int tp_proto)
 {
 	struct byte_req_pair res;
 	int bytes_to_process, get_rep_size;
 	char *buf, *ptr;
+	int header_length;
 
 	res.bytes = 0;
 	res.reqs = 0;
 	bytes_to_process = resp->iov_len;
 	buf = resp->iov_base;
+	if (tp_proto == 1) 
+		header_length = 8;
+	else
+		header_length = 0;
 
 	while (bytes_to_process) {
-		if (bytes_to_process < 5) // minimum reply is EDN\r\n
+		if (bytes_to_process < 5) // minimum reply is END\r\n
 			goto OUT;
-		if (strncmp(&buf[resp->iov_len - bytes_to_process], "END\r\n", 5) ==
+		if (strncmp(&buf[resp->iov_len - bytes_to_process + header_length], "END\r\n", 5) ==
 			0) {
 			// key not found
 			res.bytes += 5;
@@ -95,7 +102,7 @@ memcache_ascii_consume_response(struct application_protocol *proto,
 		}
 		if (bytes_to_process < 8) // try STORED\r\n
 			goto OUT;
-		if (strncmp(&buf[resp->iov_len - bytes_to_process], "STORED\r\n", 8) ==
+		if (strncmp(&buf[resp->iov_len - bytes_to_process + header_length], "STORED\r\n", 8) ==
 			0) {
 			// successful set
 			res.bytes += 8;
@@ -104,10 +111,10 @@ memcache_ascii_consume_response(struct application_protocol *proto,
 			continue;
 		}
 		// try for get reply - look for 3 \n
-		ptr = strchnth(&buf[resp->iov_len - bytes_to_process], '\n', 3);
+		ptr = strchnth(&buf[resp->iov_len - bytes_to_process + header_length], '\n', 3);
 		if (!ptr)
 			goto OUT;
-		get_rep_size = ptr - &buf[resp->iov_len - bytes_to_process] + 1;
+		get_rep_size = ptr - &buf[resp->iov_len - bytes_to_process + header_length] + 1;
 		bytes_to_process -= get_rep_size;
 		res.bytes += get_rep_size;
 		res.reqs += 1;
@@ -120,7 +127,6 @@ OUT:
 static int memcache_ascii_create_request(struct application_protocol *proto,
 										 struct request *req, int tp_proto)
 {
-	lancet_fprintf(stderr, "memcache.c -- ascii create request\n");
 	struct kv_info *info;
 	long val_len;
 	int key_idx;
@@ -139,7 +145,6 @@ static int memcache_ascii_create_request(struct application_protocol *proto,
 
 		next = 0;
 		if (tp_proto == 1) {
-			lancet_fprintf(stderr, "memcache.c -- udp condition\n");
 			udp_header.req_id = htons(1);     // Sample request ID; in practice, we'll use a proper counter.
 			udp_header.sec_num = htons(0);
 			udp_header.tot_datagram = htons(1);
@@ -166,15 +171,14 @@ static int memcache_ascii_create_request(struct application_protocol *proto,
 	} else {
 		// get
 		next = 0;
-                if (tp_proto == 1) {
-                        lancet_fprintf(stderr, "memcache.c -- udp condition\n");
-                        udp_header.req_id = htons(1);     // Sample request ID; in practice, we'll use a proper counter.
-                        udp_header.sec_num = htons(0);
-                        udp_header.tot_datagram = htons(1);
-                        udp_header.unused = 0;
-                        req->iovs[next].iov_base = &udp_header;
-                        req->iovs[next++].iov_len = sizeof(udp_header);
-                }
+		if (tp_proto == 1) {
+			udp_header.req_id = htons(1);     // Sample request ID; in practice, we'll use a proper counter.
+			udp_header.sec_num = htons(0);
+			udp_header.tot_datagram = htons(1);
+			udp_header.unused = 0;
+			req->iovs[next].iov_base = &udp_header;
+			req->iovs[next++].iov_len = sizeof(udp_header);
+		}
 		req->iovs[next].iov_base = get_cmd;
 		req->iovs[next++].iov_len = 4;
 		req->iovs[next].iov_base = key->iov_base;
@@ -190,7 +194,7 @@ static int memcache_ascii_create_request(struct application_protocol *proto,
 
 static struct byte_req_pair
 memcache_bin_consume_response(struct application_protocol *proto,
-							  struct iovec *resp)
+							  struct iovec *resp, int tp_proto)
 {
 	struct byte_req_pair res;
 	int bytes_to_process, state;

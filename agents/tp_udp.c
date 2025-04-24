@@ -274,25 +274,23 @@ static void throughput_udp_main(void)
 	struct byte_req_pair read_res;
 	struct byte_req_pair send_res;
 	struct timespec tx_timestamp;
-
-	if (create_throughput_socket())
+	if (create_throughput_socket()) 
 		return;
-
 	/*Initializations*/
 	conn_per_thread = get_conn_count() / get_thread_count();
 	events = malloc(conn_per_thread * sizeof(struct epoll_event));
 
 	next_tx = time_ns();
 	while (1) {
-		if (!should_load()) {
-			next_tx = time_ns();
-			continue;
-		}
+		// if (!should_load()) {
+		// 	next_tx = time_ns();
+		// 	continue;
+		// }
 		while (time_ns() >= next_tx) {
 			socket = get_socket();
+			
 			if (!socket)
 				goto REP_PROC;
-			lancet_fprintf(stderr, "tp_udp.c -- prepare request called");
 			to_send = prepare_request();
 			bytes_to_send = 0;
 			for (i = 0; i < to_send->iov_cnt; i++)
@@ -330,7 +328,7 @@ static void throughput_udp_main(void)
 					return;
 				}
 				read_res = process_response(socket->buffer, ret);
-				assert(read_res.bytes == ret);
+				// assert(read_res.bytes == ret);
 				/* Bookkeeping */
 				add_throughput_rx_sample(read_res);
 

@@ -23,6 +23,13 @@
 # SOFTWARE.
 
 for hostname in `IFS=',' inarr=($1) && echo ${inarr[@]}`; do
+	wheel unpack agent-manager/dist/lancet_manager-0.1.0-py3-none-any.whl
+	rm lancet_manager-0.1.0/manager/assets/agent
+	cp agents/assets/agents/agent lancet_manager-0.1.0/manager/assets/
+	wheel pack lancet_manager-0.1.0/
+	rm -rf lancet_manager-0.1.0
+	rm agent-manager/dist/lancet_manager-0.1.0-py3-none-any.whl
+	mv lancet_manager-0.1.0-py3-none-any.whl agent-manager/dist/
 	dirname=${2:-/tmp/`whoami`}/lancet
 	ssh $hostname mkdir -p $dirname
 	scp agent-manager/dist/lancet_manager-0.1.0-py3-none-any.whl $hostname:$dirname

@@ -151,14 +151,33 @@ struct request *prepare_request(void)
 
 struct byte_req_pair process_response(char *buf, int size)
 {
+	int tp_proto;
+	switch (cfg->tp_type) {
+		case TCP:
+			tp_proto = 0;
+			break;
+		case UDP:
+			tp_proto = 1;
+			break;
+		case TLS:
+			tp_proto = 2;
+			break;
+	#ifdef ENABLE_R2P2
+		case R2P2:
+			tp_proto = 3;
+			break;
+	#endif
+		default:
+			tp_proto = 0;
+			break;
+	}
 	received.iov_base = buf;
 	received.iov_len = size;
-	return consume_response(cfg->app_proto, &received);
+	return consume_response(cfg->app_proto, &received, tp_proto);
 }
 
 static void *agent_main(void *arg)
 {
-	lancet_fprintf(stderr, "agent.c -- agent_main\n");
 	cpu_set_t cpuset;
 	pthread_t thread;
 	int s;
@@ -214,7 +233,6 @@ static int configure_control_block(void)
 
 int main(int argc, char **argv)
 {
-	lancet_fprintf(stderr, "agent.c -- main\n");
 	int i;
 	pthread_t *tids;
 
@@ -245,8 +263,8 @@ int main(int argc, char **argv)
 			exit(-1);
 		}
 	}
-
 	agent_main(0);
-
+	
 	return 0;
 }
+
