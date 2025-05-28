@@ -4,4 +4,5 @@
 all: coordinator
 
 coordinator:
+	go mod tidy
 	go build
