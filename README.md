@@ -21,7 +21,7 @@ pip3 install cmake
 
 Installing build dependencies on Ubuntu:
 ```
-sudo apt install libssl-dev
+sudo apt install libssl-dev python-wheel-common
 ```
 
 ## Vanilla Lancet build

@@ -22,18 +22,22 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+# In coordinator host, insert latest agent build to lancet_manager wheel
+wheel unpack agent-manager/dist/lancet_manager-0.1.0-py3-none-any.whl
+rm lancet_manager-0.1.0/manager/assets/agent
+cp agents/assets/agents/agent lancet_manager-0.1.0/manager/assets/
+wheel pack lancet_manager-0.1.0/
+rm -rf lancet_manager-0.1.0
+rm agent-manager/dist/lancet_manager-0.1.0-py3-none-any.whl
+mv lancet_manager-0.1.0-py3-none-any.whl agent-manager/dist/
+
 for hostname in `IFS=',' inarr=($1) && echo ${inarr[@]}`; do
-	wheel unpack agent-manager/dist/lancet_manager-0.1.0-py3-none-any.whl
-	rm lancet_manager-0.1.0/manager/assets/agent
-	cp agents/assets/agents/agent lancet_manager-0.1.0/manager/assets/
-	wheel pack lancet_manager-0.1.0/
-	rm -rf lancet_manager-0.1.0
-	rm agent-manager/dist/lancet_manager-0.1.0-py3-none-any.whl
-	mv lancet_manager-0.1.0-py3-none-any.whl agent-manager/dist/
 	dirname=${2:-/tmp/`whoami`}/lancet
 	ssh $hostname mkdir -p $dirname
 	scp agent-manager/dist/lancet_manager-0.1.0-py3-none-any.whl $hostname:$dirname
 	ssh $hostname << EOF
+	sudo apt update
+	sudo apt install -y virtualenv
 	cd $dirname
 	virtualenv -p python3 venv
 	source venv/bin/activate && pip3 install $dirname/lancet_manager-0.1.0-py3-none-any.whl
