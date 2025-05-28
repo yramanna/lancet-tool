@@ -18,6 +18,12 @@ We recommend installing CMake via `pip`:
 ```
 pip3 install cmake
 ```
+
+Installing build dependencies on Ubuntu:
+```
+sudo apt install libssl-dev
+```
+
 ## Vanilla Lancet build
 Lancet supports TCP and UDP with hardware timestamping. To build run the following:
 ```
