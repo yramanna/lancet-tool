@@ -35,9 +35,22 @@ for hostname in `IFS=',' inarr=($1) && echo ${inarr[@]}`; do
 	dirname=${2:-/tmp/`whoami`}/lancet
 	ssh $hostname mkdir -p $dirname
 	scp agent-manager/dist/lancet_manager-0.1.0-py3-none-any.whl $hostname:$dirname
+	
+	PACKAGE=virtualenv
+	echo "→ Checking for package '${PACKAGE}' on ${hostname}..."
+	if ssh -o BatchMode=yes "${hostname}" "dpkg -s ${PACKAGE}" &>/dev/null; then
+		echo "✔ '${PACKAGE}' is already installed on ${hostname}."
+	else
+		echo "✖ '${PACKAGE}' is NOT installed. Installing now..."
+		ssh "${hostname}" <<EOF
+			set -e
+			sudo apt-get update -y
+			sudo apt-get install -y ${PACKAGE}
+EOF
+		echo "✔ '${PACKAGE}' has been installed on ${hostname}."
+	fi
+
 	ssh $hostname << EOF
-	sudo apt update
-	sudo apt install -y virtualenv
 	cd $dirname
 	virtualenv -p python3 venv
 	source venv/bin/activate && pip3 install $dirname/lancet_manager-0.1.0-py3-none-any.whl
