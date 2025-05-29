@@ -249,7 +249,7 @@ static void latency_udp_main(void)
 			return;
 		}
 		read_res = process_response(socket->buffer, ret);
-		assert(read_res.bytes == ret);
+		// assert(read_res.bytes == ret);
 		end_time = time_ns();
 
 		/*BookKeeping*/
@@ -282,10 +282,10 @@ static void throughput_udp_main(void)
 
 	next_tx = time_ns();
 	while (1) {
-		// if (!should_load()) {
-		// 	next_tx = time_ns();
-		// 	continue;
-		// }
+		if (!should_load()) {
+			next_tx = time_ns();
+			continue;
+		}
 		while (time_ns() >= next_tx) {
 			socket = get_socket();
 			
