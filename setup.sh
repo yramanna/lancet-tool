@@ -5,7 +5,7 @@ cd ~/
 #golang
 wget https://dl.google.com/go/go1.23.10.linux-amd64.tar.gz
 sudo tar -C /usr/local -xzf go1.23.10.linux-amd64.tar.gz
-echo -e "\nexport PATH=\$PATH:/usr/local/go/bin\nexport GOPATH=\$HOME/go\nexport PATH=\$PATH:\$GOPATH/bin" >> ~/.bashr
+echo -e "\nexport PATH=\$PATH:/usr/local/go/bin\nexport GOPATH=\$HOME/go\nexport PATH=\$PATH:\$GOPATH/bin" >> ~/.bashrc
 source ~/.bashrc
 
 cd ~/lancet-tool
